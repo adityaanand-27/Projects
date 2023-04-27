@@ -3,7 +3,6 @@ Solution: Designed a Logistic Regression model to predict the probability of pot
 Key Achievement: Developed a model with 88.46% Accuracy, 88.08% Recall & 83.04% Precision
 Libraries Used: Numpy, Pandas, Seaborn, Matplotlib, Statsmodel & Sklearn
 
-
 Problem Statement
 An education company named X Education sells online courses to industry professionals. On any given day, many professionals who are interested in the courses land on their website and browse for courses. 
  

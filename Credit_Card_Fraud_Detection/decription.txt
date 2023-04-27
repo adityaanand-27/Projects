@@ -1,0 +1,37 @@
+Credit card fraud is defined as a form of identity theft in which an individual uses someone else’s credit card information to make purchases or to withdraw funds from the account. The incidence of such fraudulent transactions has skyrocketed as the world has moved towards a digital era. The following statistics will help you understand the gravity of the situation.
+
+With the rising number of fraud cases, the company’s major focus is to provide its customers with a delightful experience while ensuring that security is not compromised.
+As a big data engineer, you need to architect and build a solution to cater to the following requirements:
+Fraud detection solution: This is a feature to detect fraudulent transactions, wherein once a cardmember swipes their card for payment, the transaction is classified as fraudulent or authentic based on a set of predefined rules. If fraud is detected, then the transaction must be declined. Please note that incorrectly classifying a transaction as fraudulent will incur huge losses to the company and also provoke negative consumer sentiment. 
+Customer information: The relevant information about the customers needs to be continuously updated on a platform from where the customer support team can retrieve relevant information in real-time to resolve customer complaints and queries.
+
+Now, let’s understand the various parameters defined by the rules required to determine the authenticity of transactions. Here are the three parameters that we will use to detect whether a transaction is fraudulent or not.
+ 
+1. Upper control limit (UCL): Every card user has an upper limit on the amount per transaction, which is different from the maximum transaction limit on each card. This parameter is an indicator of the transaction pattern associated with a particular customer. This upper bound, also known as the upper control limit (UCL), can be used as a parameter to authenticate a transaction. Suppose you have a past record of making transactions with an average amount of $20,000, and one day, the system observes a transaction of $200,000 through your card. This can be a possible case of fraud. In such cases, the cardholder receives a call from the credit card company executives to validate the transaction. UCL is derived using the following formula:
+ 
+UCL = Moving average + 3 × (Standard deviation)
+ 
+This formula is used to derive the UCL value for each card_id. The moving average and the standard deviation for each card_id are calculated based on the last 10 amounts credited that were classified as genuine.
+ 
+Note: If the total number of transactions for a particular card_id is less than 10, then calculate the parameters based on the total number of records available for that card_id.
+ 
+2. Credit score of each member: This is a straightforward rule, where you have a member_score table in which member IDs and their respective scores are available. These scores are updated by a third-party service. If the score is less than 200, that member’s transaction is rejected, as they could be a defaulter. This rule simply defines the financial reputation of each customer.
+ 
+3. ZIP code distance: The whole purpose of this rule is to keep a check on the distance between the card owner's current and last transaction location with respect to time. If the distance between the current transaction and the last transaction location with respect to time is greater than a particular threshold, then this raises suspicion on the authenticity of the transaction. Suppose at time t = t0 minutes, a transaction is recorded in Mumbai, and at time t
+= (t0 + 10) minutes, a transaction from the same card_id is recorded in New York. A flight flies with a cruising speed of about 900 km/hr, which means that someone travelling by Airbus can travel a kilometre in four seconds. This (a transaction in Mumbai followed by one in New York after 10 minutes) can be a possible case of fraud. Such cases happen often, when someone acquires your credit card details and makes transactions online. In such cases, the cardholder receives a call from the credit card company executive to validate the transaction.
+ 
+Now that you have a fair understanding of these parameters, let’s discuss the approach to calculating them.
+ 
+Let’s start with the upper control limit (UCL). The historical transactional data is stored in the card_transactions table, which was defined earlier. The UCL value needs to be calculated for each card_id for the last 10 transactions. One approach could be to trigger the computation of this parameter for a card_id every time a transaction occurs. However, considering the few seconds SLA, this might not be a good practice, as batch jobs are always associated with huge time delays.
+ 
+Another approach could be to have a lookup table that stores the UCL values based on the moving average and standard deviation of the last 10 transactions for each card_id. Whenever a transaction occurs, the record corresponding to the card_id can be easily fetched from this lookup table, rather than calculating the UCL value at the time of the transaction. 
+ 
+The second parameter is based on the credit score of the member. If this score is less than 200, then the transaction needs to be declined, as the member could turn out to be a defaulter.
+ 
+The third parameter is based on the ZIP code analysis. Store the ‘postcode’ and ‘transaction_dt’ parameters pertaining to the last transaction for each card_id in the look-up table. Whenever a new transaction occurs, retrieve the ‘postcode’ and ‘transaction_dt’ attributes from the look-up table and compare these with the current ‘postcode’ and ‘transaction_dt’ data. Use the API to calculate the speed at which the user moved from the origin. If it is more than the imaginable speed, this can be a possible case of fraud. In such cases, the cardholder receives a call from the credit card company executive to validate the transaction. 
+ 
+After initiating the real-time process following each member’s transaction, update the current received transaction’s ‘postcode’ and ‘transaction_dt’ as the last ZIP code and time in the lookup table stored in the NoSQL database if and only if the transaction is approved (satisfying all three rules).
+ 
+Once a transaction is evaluated based on the aforementioned three parameters, the transaction, along with the status (i.e., genuine or fraud) of the transaction, is stored in the card_transactions table in the database.
+ 
+Once you start the Kafka consumer in the streaming framework, each transaction of different members will be iterated and checked for these rules without any lag.
